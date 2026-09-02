@@ -1,0 +1,34 @@
+{
+  "users": [
+    {
+      "login": "zahia",
+      "hash": "db64dbddd5c363cace0894a0858d0095fb161ae77a650e11fa90405bd85dd4f8",
+      "nom": "Zahia",
+      "role": "user"
+    },
+    {
+      "login": "isabelle",
+      "hash": "203354362d7014dd7f3473d2bfc2ba4890a90bce4b3b2ed2eeed354a912cd580",
+      "nom": "Isabelle",
+      "role": "user"
+    },
+    {
+      "login": "vanessa",
+      "hash": "4ac67302685e94c755e2a8f1630ca81b14945a9f010356ae5e7ab6afb8a91ee7",
+      "nom": "Vanessa",
+      "role": "user"
+    },
+    {
+      "login": "shirley",
+      "hash": "2969345019a511938492c53bae4d29480741949accc2f0cdd105868f782a09ab",
+      "nom": "Shirley",
+      "role": "user"
+    },
+    {
+      "login": "admin",
+      "hash": "f24988f31ed14f875379d1b229d1d91efb10dd06e29351f6ff74c5e257bb84d8",
+      "nom": "Administrateur",
+      "role": "admin"
+    }
+  ]
+}
