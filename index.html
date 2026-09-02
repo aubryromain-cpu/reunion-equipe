@@ -275,6 +275,8 @@
        LAYOUT
     ═══════════════════════════════════════════ */
     #layout { display: flex; min-height: 100vh; padding-top: var(--header-h); position: relative; z-index: 1; }
+    body:has(#persist-banner:not(.hidden)) #layout { padding-top: calc(var(--header-h) + 46px); }
+    body:has(#persist-banner:not(.hidden)) #sidebar { top: calc(var(--header-h) + 46px); height: calc(100vh - var(--header-h) - 46px); }
 
     /* ═══════════════════════════════════════════
        SIDEBAR
@@ -670,6 +672,76 @@
     @keyframes toastIn  { from { opacity: 0; transform: translateX(24px) scale(0.94); } to { opacity: 1; transform: translateX(0) scale(1); } }
     @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(24px); } }
 
+    /* ── Persistence banner ── */
+    #persist-banner {
+      position: fixed; top: var(--header-h); left: 0; right: 0; z-index: 99;
+      padding: 10px 24px; display: flex; align-items: center; gap: 12px;
+      font-size: 0.82rem; font-weight: 600; line-height: 1.5;
+      background: linear-gradient(90deg, rgba(186,22,28,0.12), rgba(186,22,28,0.06));
+      border-bottom: 1px solid rgba(186,22,28,0.30); color: #9B1C1C;
+      animation: toastIn 0.4s ease;
+    }
+    #persist-banner.hidden { display: none; }
+    #persist-banner a { color: #9B1C1C; text-decoration: underline; cursor: pointer; }
+    #persist-banner-close {
+      margin-left: auto; cursor: pointer; font-size: 1.1rem; opacity: 0.6;
+      background: none; border: none; color: inherit;
+    }
+    #persist-banner-close:hover { opacity: 1; }
+
+    /* ── Last-saved indicator ── */
+    #last-saved-info {
+      font-size: 0.68rem; color: var(--text-faint); text-align: center;
+      padding: 6px 0 2px; letter-spacing: 0.02em;
+      min-height: 20px; transition: color 0.3s;
+    }
+    #last-saved-info.saving { color: var(--sta-fait); }
+
+    /* ── Clear data btn ── */
+    .btn-clear {
+      background: rgba(186,22,28,0.07); color: var(--bl-red);
+      padding: 8px 13px; border: 1px solid rgba(186,22,28,0.22);
+      font-size: 0.78rem; width: 100%; justify-content: flex-start; gap: 8px;
+    }
+    .btn-clear:hover { background: rgba(186,22,28,0.15); border-color: rgba(186,22,28,0.40); }
+
+    /* ── GitHub sync ── */
+    #github-sync-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px; border-radius: 8px; font-size: 0.72rem; font-weight: 600;
+      border: 1px solid var(--border); background: var(--surface-2);
+      margin-top: 8px; transition: all 0.3s;
+    }
+    #github-sync-bar.ok     { background: rgba(18,183,106,0.10); border-color: rgba(18,183,106,0.35); color: #065f46; }
+    #github-sync-bar.syncing{ background: rgba(55,46,149,0.10);  border-color: rgba(55,46,149,0.35);  color: var(--bl-purple); }
+    #github-sync-bar.error  { background: rgba(186,22,28,0.09);  border-color: rgba(186,22,28,0.30);  color: var(--bl-red); }
+    #github-sync-bar.idle   { background: var(--surface-2); border-color: var(--border); color: var(--text-faint); }
+    .gh-spin { display:inline-block; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── GitHub config modal ── */
+    #github-config-modal .modal { max-width: 480px; }
+    .token-input-wrap { position: relative; }
+    .token-input-wrap input { padding-right: 44px; font-family: monospace; font-size: 0.82rem; letter-spacing: 0.04em; }
+    .token-eye {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; font-size: 16px; color: var(--text-faint);
+      transition: color var(--transition);
+    }
+    .token-eye:hover { color: var(--text); }
+    .token-help {
+      font-size: 0.71rem; color: var(--text-faint); line-height: 1.6;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 12px; margin-top: 2px;
+    }
+    .token-help a { color: var(--bl-purple); text-decoration: underline; }
+    .gh-repo-info {
+      font-size: 0.78rem; color: var(--text-muted);
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 4px;
+    }
+    .gh-repo-info span { font-weight: 700; color: var(--bl-purple); }
+
     /* ═══════════════════════════════════════════
        NO RESULTS
     ═══════════════════════════════════════════ */
@@ -697,6 +769,16 @@
 
 <!-- CONFETTI -->
 <canvas id="confetti-canvas"></canvas>
+
+<!-- PERSISTENCE BANNER (shown if localStorage is unavailable) -->
+<div id="persist-banner" class="hidden" role="alert">
+  <span>⚠️</span>
+  <span>
+    <strong>Sauvegarde automatique indisponible</strong> — votre navigateur bloque localStorage (fichier ouvert en local ou mode privé).
+    Utilisez <a id="banner-export-link">💾 Exporter</a> régulièrement pour ne pas perdre vos données.
+  </span>
+  <button id="persist-banner-close" title="Fermer">✕</button>
+</div>
 
 <!-- ══════ HEADER ══════ -->
 <header id="app-header">
@@ -834,10 +916,22 @@
           <button class="btn btn-data" id="btn-export-sb">💾 Exporter (.json)</button>
           <button class="btn btn-data" id="btn-import-trigger-sb">📂 Importer (.json)</button>
         </div>
-        <div style="margin-top:8px;font-size:0.68rem;padding:8px 10px;border-radius:8px;background:rgba(244,185,66,0.1);border:1px solid rgba(244,185,66,0.3);color:#F4B942;line-height:1.6">
-  💾 <strong>Partage d'équipe :</strong><br>
-  <span style="color:var(--text-muted)">Exportez votre JSON et partagez-le dans Teams. Vos collègues l'importent pour voir vos données.</span>
-</div>
+        <button class="btn btn-clear btn-data" id="btn-clear-data">🗑️ Effacer toutes les données</button>
+        <div id="last-saved-info">—</div>
+
+        <!-- GitHub Sync -->
+        <div style="margin-top:10px">
+          <div class="sidebar-section-title" style="margin-bottom:6px">🐙 Sync GitHub</div>
+          <div class="sidebar-data-actions">
+            <button class="btn btn-data" id="btn-github-config" style="width:100%;justify-content:flex-start;gap:8px">⚙️ Configurer le token</button>
+            <button class="btn btn-data" id="btn-github-pull"   style="width:100%;justify-content:flex-start;gap:8px">⬇️ Charger depuis GitHub</button>
+            <button class="btn btn-data" id="btn-github-push"   style="width:100%;justify-content:flex-start;gap:8px">⬆️ Pousser vers GitHub</button>
+          </div>
+          <div id="github-sync-bar" class="idle">
+            <span id="gh-sync-icon">🐙</span>
+            <span id="gh-sync-text">Non configuré</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -931,61 +1025,218 @@
 <!-- TOAST -->
 <div id="toast-container"></div>
 
+<!-- ══════ GITHUB CONFIG MODAL ══════ -->
+<div class="modal-overlay" id="github-config-modal" style="display:none">
+  <div class="modal" role="dialog" aria-modal="true" style="max-width:480px">
+    <div class="modal-header">
+      <h3 class="modal-title">🐙 Synchronisation GitHub</h3>
+      <button class="modal-close" id="github-config-close" title="Fermer">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="gh-repo-info">
+        📁 Repository : <span>aubryromain-cpu/reunion-equipe</span>
+        📄 Fichier de données : <span>reunion-data.json</span>
+        🌿 Branche : <span>main</span>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label">🔑 Personal Access Token GitHub <span class="req">*</span></label>
+        <div class="token-input-wrap">
+          <input type="password" class="form-input" id="gh-token-input"
+            placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false" />
+          <button class="token-eye" id="gh-token-eye" title="Afficher/masquer">👁️</button>
+        </div>
+        <div class="token-help">
+          🔒 Le token est stocké <strong>uniquement dans votre navigateur</strong> (localStorage) et n'est jamais envoyé ailleurs que vers l'API GitHub.<br><br>
+          Pour créer un token :<br>
+          1. Allez sur <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a><br>
+          2. Donnez-lui un nom (ex: <em>Dashboard Réunion BL</em>)<br>
+          3. Cochez la permission <strong>repo → Contents (read & write)</strong><br>
+          4. Cliquez <strong>Generate token</strong> et copiez-le ici
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label">🔄 Sauvegarde automatique</label>
+        <select class="form-select" id="gh-autosync-select">
+          <option value="off">Désactivée (manuel uniquement)</option>
+          <option value="on" selected>Activée (après chaque modification)</option>
+        </select>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="gh-config-cancel">Annuler</button>
+      <div class="modal-footer-right">
+        <button class="btn btn-ghost" id="gh-test-btn">🧪 Tester</button>
+        <button class="btn btn-save-form" id="gh-config-save">💾 Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ═══════════════════════════
    STATE & STORAGE
 ════════════════════════════ */
-const STORAGE_KEY = 'reunion_dashboard_v1';
-let state   = { meetingTitle: "Réunion d'équipe hebdomadaire", meetingDate: '', items: [] };
-let filters = { status: 'all', priority: null, tag: null, search: '' };
+const STORAGE_KEY      = 'reunion_dashboard_v1';
+const STORAGE_KEY_META = 'reunion_dashboard_meta_v1'; // last-saved timestamp
+const DEFAULT_STATE    = () => ({ meetingTitle: "Réunion d'équipe hebdomadaire", meetingDate: '', items: [] });
+
+let state     = DEFAULT_STATE();
+let filters   = { status: 'all', priority: null, tag: null, search: '' };
 let editingId = null;
 
-/* ── Storage layer : localStorage → sessionStorage fallback ── */
-let _storageWarned = false;
-let _activeStorage = null; // resolved on first save/load
+/* ── Storage capability detection ── */
+let _storageCapability = null; // 'local' | 'session' | 'none'
+let _storageWarned     = false;
+
+function _detectStorage() {
+  if (_storageCapability) return _storageCapability;
+  const probe = '__bl_probe__';
+  try {
+    localStorage.setItem(probe, '1');
+    if (localStorage.getItem(probe) === '1') {
+      localStorage.removeItem(probe);
+      _storageCapability = 'local';
+      return 'local';
+    }
+  } catch(e) {}
+  try {
+    sessionStorage.setItem(probe, '1');
+    if (sessionStorage.getItem(probe) === '1') {
+      sessionStorage.removeItem(probe);
+      _storageCapability = 'session';
+      return 'session';
+    }
+  } catch(e) {}
+  _storageCapability = 'none';
+  return 'none';
+}
 
 function _getStorage() {
-  if (_activeStorage) return _activeStorage;
-  try {
-    const probe = '__probe__';
-    localStorage.setItem(probe, '1');
-    localStorage.removeItem(probe);
-    _activeStorage = localStorage;
-  } catch(e) {
-    _activeStorage = sessionStorage;
+  const cap = _detectStorage();
+  if (cap === 'local')   return localStorage;
+  if (cap === 'session') return sessionStorage;
+  return null;
+}
+
+function _showPersistBanner() {
+  const banner = document.getElementById('persist-banner');
+  if (banner) banner.classList.remove('hidden');
+}
+
+function _hidePersistBanner() {
+  const banner = document.getElementById('persist-banner');
+  if (banner) banner.classList.add('hidden');
+}
+
+function _updateLastSavedUI(success) {
+  const el = document.getElementById('last-saved-info');
+  if (!el) return;
+  if (!success) {
+    el.textContent = '⚠️ Non sauvegardé';
+    el.style.color = 'var(--pri-haute)';
+    return;
   }
-  return _activeStorage;
+  const now = new Date();
+  const hh  = String(now.getHours()).padStart(2,'0');
+  const mm  = String(now.getMinutes()).padStart(2,'0');
+  const ss  = String(now.getSeconds()).padStart(2,'0');
+  el.textContent = `✅ Sauvegardé à ${hh}:${mm}:${ss}`;
+  el.classList.add('saving');
+  setTimeout(() => {
+    el.classList.remove('saving');
+    el.style.color = '';
+  }, 2000);
 }
 
 function loadState() {
-  // Try localStorage first, then sessionStorage
   const stores = [localStorage, sessionStorage];
   for (const store of stores) {
     try {
-      const r = store.getItem(STORAGE_KEY);
-      if (r) { state = Object.assign(state, JSON.parse(r)); return; }
-    } catch(e) {}
+      const raw = store.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          state = Object.assign(DEFAULT_STATE(), parsed);
+          // Restore last-saved label
+          const meta = store.getItem(STORAGE_KEY_META);
+          const el   = document.getElementById('last-saved-info');
+          if (el && meta) el.textContent = `✅ Chargé (${meta})`;
+          return;
+        }
+      }
+    } catch(e) { /* ignore */ }
   }
 }
 
 function saveState() {
   const storage = _getStorage();
-  try {
-    storage.setItem(STORAGE_KEY, JSON.stringify(state));
-    // Warn once if we fell back to sessionStorage
-    if (storage !== localStorage && !_storageWarned) {
+  const cap     = _detectStorage();
+
+  if (!storage || cap === 'none') {
+    if (!_storageWarned) {
       _storageWarned = true;
-      setTimeout(() => showToast(
-        '⚠️ Sauvegarde en mémoire de session uniquement. Pour une sauvegarde permanente, ouvrez ce fichier via un serveur local.',
-        'warn', '⚠️'
-      ), 300);
+      _showPersistBanner();
+      showToast('⚠️ Impossible de sauvegarder. Utilisez Exporter !', 'warn', '⚠️');
     }
+    _updateLastSavedUI(false);
+    return;
+  }
+
+  try {
+    const payload = JSON.stringify(state);
+    storage.setItem(STORAGE_KEY, payload);
+
+    // Save timestamp
+    const now     = new Date();
+    const hh      = String(now.getHours()).padStart(2,'0');
+    const mm      = String(now.getMinutes()).padStart(2,'0');
+    const ss      = String(now.getSeconds()).padStart(2,'0');
+    const label   = `${now.toLocaleDateString('fr-FR')} ${hh}:${mm}:${ss}`;
+    storage.setItem(STORAGE_KEY_META, label);
+
+    _updateLastSavedUI(true);
+
+    // Warn once if we fell back to sessionStorage
+    if (cap === 'session' && !_storageWarned) {
+      _storageWarned = true;
+      _showPersistBanner();
+      setTimeout(() => showToast(
+        '⚠️ Données en mémoire de session uniquement (fermeture = perte). Exportez régulièrement !',
+        'warn', '⚠️'
+      ), 400);
+    } else if (cap === 'local') {
+      _hidePersistBanner();
+    }
+
+    // Auto-push to GitHub (debounced)
+    if (typeof GH !== 'undefined') GH.autoPush();
+
   } catch(e) {
     if (!_storageWarned) {
       _storageWarned = true;
-      showToast('⚠️ Impossible de sauvegarder. Utilisez le bouton Exporter pour ne pas perdre vos données.', 'warn', '⚠️');
+      _showPersistBanner();
+      showToast('⚠️ Stockage plein ou bloqué. Utilisez Exporter !', 'warn', '⚠️');
     }
+    _updateLastSavedUI(false);
   }
+}
+
+function clearAllData() {
+  if (!confirm('🗑️ Effacer TOUTES les données (points, titre, date) ? Cette action est irréversible.')) return;
+  state = DEFAULT_STATE();
+  const stores = [localStorage, sessionStorage];
+  stores.forEach(s => { try { s.removeItem(STORAGE_KEY); s.removeItem(STORAGE_KEY_META); } catch(e){} });
+  initHeaderEditing();
+  renderCards();
+  updatePrintArea();
+  updateCountdown();
+  const el = document.getElementById('last-saved-info');
+  if (el) el.textContent = '🗑️ Données effacées';
+  showToast('🗑️ Toutes les données ont été effacées.', 'success', '🗑️');
 }
 
 /* ═══════════════════════════
@@ -1465,6 +1716,35 @@ function init() {
     reader.readAsText(file);
   }
 
+  // GitHub sync module init
+  GH.initModal();
+  document.getElementById('btn-github-pull').addEventListener('click', () => GH.pull());
+  document.getElementById('btn-github-push').addEventListener('click', () => GH.push(false));
+
+  // Auto-load from GitHub on startup if token is configured
+  if (GH.getToken()) {
+    GH.pull().catch(() => {});
+  }
+
+  // Persistence banner
+  const bannerClose = document.getElementById('persist-banner-close');
+  if (bannerClose) bannerClose.addEventListener('click', _hidePersistBanner);
+  const bannerExport = document.getElementById('banner-export-link');
+  if (bannerExport) bannerExport.addEventListener('click', doExport);
+
+  // Clear data
+  document.getElementById('btn-clear-data').addEventListener('click', clearAllData);
+
+  // Detect storage and show banner proactively if needed
+  const _cap = _detectStorage();
+  if (_cap === 'none') {
+    _showPersistBanner();
+  } else if (_cap === 'session') {
+    setTimeout(() => {
+      if (!_storageWarned) { _storageWarned = true; _showPersistBanner(); }
+    }, 800);
+  }
+
   // Header buttons
   document.getElementById('btn-export').addEventListener('click', doExport);
   document.getElementById('btn-export-sb').addEventListener('click', doExport);
@@ -1475,6 +1755,212 @@ function init() {
   document.getElementById('btn-import-trigger-sb').addEventListener('click', triggerImport);
   fileInput.addEventListener('change', e => { doImport(e.target.files[0]); fileInput.value = ''; });
 }
+
+/* ═══════════════════════════════════════════
+   GITHUB SYNC MODULE
+═══════════════════════════════════════════ */
+const GH = {
+  REPO    : 'aubryromain-cpu/reunion-equipe',
+  FILE    : 'reunion-data.json',
+  BRANCH  : 'main',
+  API_BASE: 'https://api.github.com',
+  TOKEN_KEY    : 'gh_token_reunion_bl',
+  AUTOSYNC_KEY : 'gh_autosync_reunion_bl',
+
+  /* ── helpers ── */
+  getToken()    { try { return localStorage.getItem(this.TOKEN_KEY) || ''; } catch(e){ return ''; } },
+  saveToken(t)  { try { localStorage.setItem(this.TOKEN_KEY, t); } catch(e){} },
+  getAutoSync() { try { return (localStorage.getItem(this.AUTOSYNC_KEY) || 'on') === 'on'; } catch(e){ return true; } },
+  saveAutoSync(v){ try { localStorage.setItem(this.AUTOSYNC_KEY, v ? 'on' : 'off'); } catch(e){} },
+
+  headers() {
+    const tok = this.getToken();
+    const h = { 'Content-Type': 'application/json', 'Accept': 'application/vnd.github+json' };
+    if (tok) h['Authorization'] = `Bearer ${tok}`;
+    return h;
+  },
+
+  setSyncBar(status, text, spin=false) {
+    const bar  = document.getElementById('github-sync-bar');
+    const icon = document.getElementById('gh-sync-icon');
+    const txt  = document.getElementById('gh-sync-text');
+    if (!bar) return;
+    bar.className = `gh-status ${status}`;
+    // Remove old classes, set new
+    bar.classList.remove('ok','syncing','error','idle');
+    bar.classList.add(status);
+    txt.textContent = text;
+    if (spin) {
+      icon.innerHTML = '<span class="gh-spin">⚙️</span>';
+    } else {
+      const icons = { ok:'✅', syncing:'🔄', error:'❌', idle:'🐙' };
+      icon.textContent = icons[status] || '🐙';
+    }
+  },
+
+  /* ── Get current SHA of the file (needed to update it) ── */
+  async getFileSHA() {
+    const url = `${this.API_BASE}/repos/${this.REPO}/contents/${this.FILE}?ref=${this.BRANCH}&t=${Date.now()}`;
+    const res = await fetch(url, { headers: this.headers() });
+    if (res.status === 404) return null; // file doesn't exist yet
+    if (!res.ok) throw new Error(`GitHub API error ${res.status}: ${res.statusText}`);
+    const data = await res.json();
+    return data.sha || null;
+  },
+
+  /* ── Pull : load data from GitHub ── */
+  async pull() {
+    const tok = this.getToken();
+    if (!tok) { showToast('⚙️ Configurez votre token GitHub d\'abord.', 'warn', '⚙️'); return; }
+    this.setSyncBar('syncing', 'Chargement depuis GitHub…', true);
+    try {
+      const url = `${this.API_BASE}/repos/${this.REPO}/contents/${this.FILE}?ref=${this.BRANCH}&t=${Date.now()}`;
+      const res = await fetch(url, { headers: this.headers() });
+      if (res.status === 404) {
+        this.setSyncBar('idle', 'Fichier absent sur GitHub');
+        showToast('📄 Aucun fichier trouvé sur GitHub. Faites un premier Push !', 'warn', '📄');
+        return;
+      }
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
+      const data    = await res.json();
+      const decoded = JSON.parse(atob(data.content.replace(/\n/g,'')));
+      state = Object.assign(DEFAULT_STATE(), decoded);
+      saveState();
+      initHeaderEditing();
+      renderCards();
+      updatePrintArea();
+      updateCountdown();
+      this.setSyncBar('ok', `Chargé — ${(state.items||[]).length} point(s)`);
+      showToast(`⬇️ Données chargées depuis GitHub (${(state.items||[]).length} point(s)).`, 'success', '⬇️');
+    } catch(err) {
+      this.setSyncBar('error', 'Erreur de chargement');
+      showToast(`❌ Pull GitHub échoué : ${err.message}`, 'error', '❌');
+      console.error('GH pull error:', err);
+    }
+  },
+
+  /* ── Push : save data to GitHub ── */
+  async push(silent=false) {
+    const tok = this.getToken();
+    if (!tok) {
+      if (!silent) showToast('⚙️ Configurez votre token GitHub d\'abord.', 'warn', '⚙️');
+      return;
+    }
+    this.setSyncBar('syncing', 'Synchronisation GitHub…', true);
+    try {
+      const sha     = await this.getFileSHA();
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(state, null, 2))));
+      const now     = new Date().toLocaleString('fr-FR');
+      const body    = {
+        message : `🔄 Sync dashboard réunion — ${now}`,
+        content,
+        branch  : this.BRANCH,
+        ...(sha ? { sha } : {})
+      };
+      const url = `${this.API_BASE}/repos/${this.REPO}/contents/${this.FILE}`;
+      const res = await fetch(url, { method: 'PUT', headers: this.headers(), body: JSON.stringify(body) });
+      if (!res.ok) {
+        const errData = await res.json().catch(()=>({}));
+        throw new Error(errData.message || `Erreur ${res.status}`);
+      }
+      const hh = String(new Date().getHours()).padStart(2,'0');
+      const mm = String(new Date().getMinutes()).padStart(2,'0');
+      this.setSyncBar('ok', `Sync GitHub ✅ ${hh}:${mm}`);
+      if (!silent) showToast(`⬆️ Données sauvegardées sur GitHub !`, 'success', '⬆️');
+    } catch(err) {
+      this.setSyncBar('error', `Erreur : ${err.message.slice(0,40)}`);
+      if (!silent) showToast(`❌ Push GitHub échoué : ${err.message}`, 'error', '❌');
+      console.error('GH push error:', err);
+    }
+  },
+
+  /* ── Test connection ── */
+  async test() {
+    const tok = this.getToken();
+    if (!tok) { showToast('Saisissez d\'abord un token !', 'warn', '⚙️'); return false; }
+    const testBtn = document.getElementById('gh-test-btn');
+    if (testBtn) { testBtn.textContent = '⏳ Test…'; testBtn.disabled = true; }
+    try {
+      const res = await fetch(`${this.API_BASE}/repos/${this.REPO}`, { headers: this.headers() });
+      if (!res.ok) throw new Error(`Repo inaccessible (${res.status})`);
+      const repo = await res.json();
+      showToast(`✅ Connecté à "${repo.full_name}" (${repo.visibility}) !`, 'success', '✅');
+      if (testBtn) { testBtn.textContent = '✅ OK !'; testBtn.disabled = false; }
+      return true;
+    } catch(err) {
+      showToast(`❌ Test échoué : ${err.message}`, 'error', '❌');
+      if (testBtn) { testBtn.textContent = '🧪 Tester'; testBtn.disabled = false; }
+      return false;
+    }
+  },
+
+  /* ── Auto-push (debounced, called after saveState) ── */
+  _autoPushTimer: null,
+  autoPush() {
+    if (!this.getAutoSync()) return;
+    if (!this.getToken()) return;
+    clearTimeout(this._autoPushTimer);
+    this._autoPushTimer = setTimeout(() => this.push(true), 1800);
+  },
+
+  /* ── Init config modal ── */
+  initModal() {
+    const modal      = document.getElementById('github-config-modal');
+    const closeBtn   = document.getElementById('github-config-close');
+    const cancelBtn  = document.getElementById('gh-config-cancel');
+    const saveBtn    = document.getElementById('gh-config-save');
+    const testBtn    = document.getElementById('gh-test-btn');
+    const eyeBtn     = document.getElementById('gh-token-eye');
+    const tokenInput = document.getElementById('gh-token-input');
+    const syncSelect = document.getElementById('gh-autosync-select');
+
+    const open = () => {
+      tokenInput.value    = this.getToken();
+      syncSelect.value    = this.getAutoSync() ? 'on' : 'off';
+      modal.style.display = 'flex';
+      setTimeout(() => tokenInput.focus(), 60);
+    };
+    const close = () => { modal.style.display = 'none'; };
+
+    document.getElementById('btn-github-config').addEventListener('click', open);
+    closeBtn.addEventListener('click', close);
+    cancelBtn.addEventListener('click', close);
+    modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+    eyeBtn.addEventListener('click', () => {
+      const show = tokenInput.type === 'password';
+      tokenInput.type = show ? 'text' : 'password';
+      eyeBtn.textContent = show ? '🙈' : '👁️';
+    });
+
+    saveBtn.addEventListener('click', () => {
+      const tok = tokenInput.value.trim();
+      if (!tok) { showToast('Le token est requis !', 'error', '❌'); return; }
+      if (!tok.startsWith('ghp_') && !tok.startsWith('github_pat_') && !tok.startsWith('gho_')) {
+        showToast('⚠️ Format de token inhabituel (ghp_… attendu).', 'warn', '⚠️');
+      }
+      this.saveToken(tok);
+      this.saveAutoSync(syncSelect.value === 'on');
+      this.setSyncBar('idle', 'Token configuré — prêt');
+      showToast('🔑 Token GitHub enregistré !', 'success', '🔑');
+      close();
+    });
+
+    testBtn.addEventListener('click', () => {
+      // temporarily save token for test
+      const tok = tokenInput.value.trim();
+      this.saveToken(tok);
+      this.test();
+    });
+
+    // Restore sync bar state on load
+    if (this.getToken()) {
+      this.setSyncBar('idle', 'Token configuré — prêt');
+    } else {
+      this.setSyncBar('idle', 'Non configuré');
+    }
+  }
+};
 
 document.addEventListener('DOMContentLoaded', init);
 </script>
