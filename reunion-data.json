@@ -1,0 +1,17 @@
+{
+  "meetingTitle": "Réunion d'équipe hebdomadaire",
+  "meetingDate": "",
+  "items": [
+    {
+      "id": "mtk4dk317ouni",
+      "title": "TEST",
+      "description": "",
+      "priority": "Normale",
+      "tag": "RH",
+      "status": "À traiter",
+      "annotations": "",
+      "createdAt": "2026-09-02T13:16:12.397Z",
+      "updatedAt": "2026-09-02T13:16:12.397Z"
+    }
+  ]
+}
