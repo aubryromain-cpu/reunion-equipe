@@ -1,5 +1,17 @@
 {
   "meetingTitle": "Réunion Equipe hebdomadaire",
   "meetingDate": "",
-  "items": []
+  "items": [
+    {
+      "id": "mtk5qwha9da3m",
+      "title": "Test réunion mardi",
+      "description": "",
+      "priority": "Normale",
+      "tag": "RH",
+      "status": "À traiter",
+      "annotations": "Mail interne a traiter",
+      "createdAt": "2026-09-02T13:54:34.606Z",
+      "updatedAt": "2026-09-02T13:54:34.606Z"
+    }
+  ]
 }
