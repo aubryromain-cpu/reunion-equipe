@@ -23,28 +23,6 @@
       "annotations": "",
       "createdAt": "2026-09-02T14:05:15.169Z",
       "updatedAt": "2026-09-02T14:05:15.169Z"
-    },
-    {
-      "id": "mtk5rwoa56169",
-      "title": "CP équipe",
-      "description": "",
-      "priority": "Faible",
-      "tag": "Autre",
-      "status": "À traiter",
-      "annotations": "CP à voir",
-      "createdAt": "2026-09-02T13:55:21.514Z",
-      "updatedAt": "2026-09-02T13:55:21.514Z"
-    },
-    {
-      "id": "mtk5qwha9da3m",
-      "title": "Test réunion mardi",
-      "description": "",
-      "priority": "Normale",
-      "tag": "RH",
-      "status": "À traiter",
-      "annotations": "Mail interne a traiter",
-      "createdAt": "2026-09-02T13:54:34.606Z",
-      "updatedAt": "2026-09-02T13:54:34.606Z"
     }
   ]
 }
