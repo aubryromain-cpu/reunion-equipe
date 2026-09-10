@@ -29,6 +29,12 @@
       "hash": "f24988f31ed14f875379d1b229d1d91efb10dd06e29351f6ff74c5e257bb84d8",
       "nom": "Administrateur",
       "role": "admin"
+    },
+    {
+      "login": "yann",
+      "nom": "Yann GUYONNET",
+      "role": "admin",
+      "hash": "3c8542686b8bb2efd181514f5f993b3bffc8276126bc33f1ad057982850cc788"
     }
   ]
 }
